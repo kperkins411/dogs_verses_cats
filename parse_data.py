@@ -5,6 +5,28 @@
 
 #splits the train data into 90% train and 10% validation
 #the test set is for testing model, results submitted to kaggle
+'''
+#dir structure
+all
+        test
+            #uncategorized kaggle test data
+        all
+            train
+                dogs
+                cats
+            validate
+                dogs
+                cats
+        sample
+            train
+                dogs
+                cats
+            validate
+                dogs
+                cats
+     train.zip # zip of all data
+     test.zip  #zip of kaggle data
+'''
 
 
 # import the necessary packages
@@ -24,7 +46,6 @@ logging.basicConfig(
 )
 utilities = utils.utils()
 
-
 #the next 2 functions used to create proper directory structure
 def getDirs(homeDir, split):
     split_dir = os.path.join(homeDir, split)
@@ -32,10 +53,11 @@ def getDirs(homeDir, split):
     split_cats_dir = os.path.join(split_dir, "cats")
     return split_dir,split_cats_dir, split_dogs_dir
 
-def makeDirs(split_dir, split_cats_dir, split_dogs_dir):
-    utilities.makeDir(split_dir)
-    utilities.makeDir(split_dogs_dir)
-    utilities.makeDir(split_cats_dir)
+def makeDirs(*dirs):
+    if not dirs:
+        logging.debug("called makedirs with no dirs to make!")
+    for dir in dirs:
+        utilities.makeDir(dir)
 
 def create_uncategorized_dataset(homeDir, split, zipfile):
     '''
@@ -67,43 +89,60 @@ def create_uncategorized_dataset(homeDir, split, zipfile):
     #get rid of empty dir
     os.rmdir(allfilespath)
 
-def create_sample_dataset(homeDir):
-    # create all dirs
-    sample_dir, sample_cats_dir, sample_dogs_dir = getDirs(homeDir, "sample")
-    makeDirs(sample_dir,sample_cats_dir, sample_dogs_dir)
+def create_sample_dataset(datadir):
+    # where training data resides
+    alldatadir = os.path.join(datadir, "all")
+    train_dir, train_cats_dir, train_dogs_dir = getDirs(alldatadir, "train")
+    validate_dir, validate_cats_dir, validate_dogs_dir = getDirs(alldatadir, "validate")
 
-    #where training data resides
-    _,train_cats_dir, train_dogs_dir = getDirs(homeDir, "train")
+    # create all dirs
+    sampledatadir = os.path.join(datadir, "sample")
+    sample_train_dir, sample_train_cats_dir, sample_train_dogs_dir = getDirs(sampledatadir, "train")
+    makeDirs(sampledatadir, sample_train_dir, sample_train_cats_dir, sample_train_dogs_dir)
+
+    sample_validate_dir, sample_validate_cats_dir, sample_validate_dogs_dir = getDirs(sampledatadir, "validate")
+    makeDirs( sample_validate_dir, sample_validate_cats_dir, sample_validate_dogs_dir)
+
+    # how many train/test/validate samples
+    numbtraincats = numbtraindogs = int(settings.TRAIN_PERCENT * (settings.NUMBER_OF_SAMPLES / 2))
+    numbvalcats = numbvaldogs = int(settings.VALIDATE_PERCENT * (settings.NUMBER_OF_SAMPLES  / 2))
 
     # copy in  cats and dogs
     cats = os.listdir(train_cats_dir)
-    for cat in cats[:settings.NUMBER_OF_SAMPLES]:
-        shutil.copy2( os.path.join(train_cats_dir,cat), os.path.join(sample_cats_dir,cat))
+    for cat in cats[:numbtraincats]:
+        shutil.copy2( os.path.join(train_cats_dir,cat), os.path.join(sample_train_cats_dir,cat))
+
+    cats = os.listdir(validate_cats_dir)
+    for cat in cats[:numbvalcats]:
+        shutil.copy2(os.path.join(validate_cats_dir, cat), os.path.join(sample_validate_cats_dir, cat))
 
     dogs = os.listdir(train_dogs_dir)
-    for dog in dogs[:100]:
-        shutil.copy2( os.path.join(train_dogs_dir,dog), os.path.join(sample_dogs_dir,dog))
+    for dog in dogs[:numbtraindogs]:
+        shutil.copy2(os.path.join(train_dogs_dir, dog), os.path.join(sample_train_dogs_dir, dog))
 
-def create_train_validate_test_split(homeDir,zipfile):
+    dogs = os.listdir(validate_dogs_dir)
+    for dog in dogs[:numbvaldogs]:
+        shutil.copy2(os.path.join(validate_dogs_dir, dog), os.path.join(sample_validate_dogs_dir, dog))
+def create_train_validate_split(datadir,zipfile):
     '''
-     unzips and parses zipfile into train/test/validate splits
+     unzips and parses zipfile into train/validate splits
+
      :param homeDir: where zipfile is
      :param zipfile: name of zipfile
      :return:
+
      '''
 
     # create all dirs
-    train_dir, train_cats_dir, train_dogs_dir = getDirs(homeDir, "train")
-    makeDirs(train_dir, train_cats_dir, train_dogs_dir)
+    alldatadir = os.path.join(datadir, "all")
+    train_dir, train_cats_dir, train_dogs_dir = getDirs(alldatadir, "train")
+    makeDirs(alldatadir,train_dir, train_cats_dir, train_dogs_dir)
 
-    test_dir, test_cats_dir, test_dogs_dir = getDirs(homeDir, "test")
-    makeDirs(test_dir, test_cats_dir, test_dogs_dir)
-
-    validate_dir, validate_cats_dir, validate_dogs_dir = getDirs(homeDir, "validate")
-    makeDirs(validate_dir, validate_cats_dir, validate_dogs_dir)
+    validate_dir, validate_cats_dir, validate_dogs_dir = getDirs(alldatadir, "validate")
+    makeDirs(alldatadir,validate_dir, validate_cats_dir, validate_dogs_dir)
 
     # unzip all
-    utilities.unzip_to_dir(os.path.join(homeDir, zipfile), train_dogs_dir)
+    utilities.unzip_to_dir(os.path.join(datadir, zipfile), train_dogs_dir)
 
     # the zip unzips into a parent directory where all images are
     # get the parent dir
@@ -121,7 +160,6 @@ def create_train_validate_test_split(homeDir,zipfile):
     #how many train/test/validate samples
     numbtraincats = numbtraindogs = int(settings.TRAIN_PERCENT*(numbfiles/2))
     numbvalcats = numbvaldogs = int(settings.VALIDATE_PERCENT*(numbfiles/2))
-    numbtestcats = numbtestdogs = int(settings.TEST_PERCENT * (numbfiles/2))
 
     destdir = None
     for file in allfiles:
@@ -129,23 +167,18 @@ def create_train_validate_test_split(homeDir,zipfile):
             if numbtraincats != 0:
                 numbtraincats-=1
                 destdir = train_cats_dir
-            elif numbvalcats != 0:
+            else :
                 numbvalcats -=1
                 destdir = validate_cats_dir
-            else:
-                numbtestcats -=1
-                destdir = test_cats_dir
+
             os.rename(os.path.join(allfilespath, file), os.path.join(destdir, file))
         else:
             if numbtraindogs != 0:
                 numbtraindogs-=1
                 destdir = train_dogs_dir
-            elif numbvaldogs != 0:
+            else:
                 numbvaldogs -=1
                 destdir = validate_dogs_dir
-            else:
-                numbtestdogs -=1
-                destdir = test_dogs_dir
             os.rename(os.path.join(allfilespath, file), os.path.join(destdir, file))
 
     # get rid of empty dir
@@ -163,13 +196,13 @@ def main():
     kaggle_testzip = args["test"]
 
     # where are we?
-    root = os.path.abspath(os.path.dirname(__file__))
-    homedir = os.getcwd()
+    thisdir = os.getcwd()
+    alldatadir = os.path.join(thisdir,"data")
 
     #create the datasets
-    create_uncategorized_dataset(homedir,"test", kaggle_testzip)
-    create_train_validate_test_split(homedir,trainzip)
-    create_sample_dataset(homedir)
+    create_uncategorized_dataset(alldatadir,"test", kaggle_testzip)
+    create_train_validate_split(alldatadir,trainzip)
+    create_sample_dataset(alldatadir)
 
 if __name__ == '__main__':
     main()
