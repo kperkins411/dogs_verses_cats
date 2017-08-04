@@ -10,15 +10,15 @@ data<BR>
     │   │   ├ cats<BR>
     │   │   └ dogs<BR>
     │   └ validate<BR>
-    │          ├ cats<BR>
-    │          └ dogs<BR>
+    │       ├ cats<BR>
+    │       └ dogs<BR>
     ├ sample<BR>
     │   ├ train<BR>
     │   │   ├ cats<BR>
     │   │   └ dogs<BR>
     │   └ validate<BR>
-    │          ├ cats<BR>
-    │          └ dogs<BR>
+    │       ├ cats<BR>
+    │       └ dogs<BR>
     └ test<BR>
 
 
