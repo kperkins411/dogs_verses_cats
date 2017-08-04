@@ -6,9 +6,9 @@ Run parse_data to unzip data, create proper directory structure(see below, tree-
 <BR>
 data<BR>
      ├── all<BR>
-    │   ├── train<BR>
-    │   │   ├── cats<BR>
-    │   │   └── dogs<BR>
+    │   ├ train<BR>
+    │   │   ├ cats<BR>
+    │   │   └ dogs<BR>
     │   └── validate<BR>
     │       ├── cats<BR>
     │       └── dogs<BR>
