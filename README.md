@@ -4,7 +4,7 @@ First Kaggle competition
 setup project with /data directory containing both test.zip and train.zip datasets (available from kaggle).  
 Run parse_data to unzip data, create proper directory structure(see below, tree-d output), and slot dogs/cats images into correct directories.
 .
-└── data
+└── data<BR>
     ├── all
     │   ├── train
     │   │   ├── cats
