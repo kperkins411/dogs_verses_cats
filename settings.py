@@ -16,7 +16,7 @@ KAGGLE_TEST_FOLDER_NAME="unknown"
 # If you have an older or cheaper GPU, you'll run out of memory, so will have to decrease this.
 BATCH_SIZE = 8
 TEST_BATCH_SIZE = 128
-NUMBER_EPOCHS = 1
+NUMBER_EPOCHS = 2
 
 DATA_ALL = "data/all/"
 DATA_SAMPLE = "data/sample/"

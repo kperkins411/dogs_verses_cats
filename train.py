@@ -13,7 +13,7 @@ import settings
 import logging
 from keras.callbacks import ModelCheckpoint
 from keras.callbacks import EarlyStopping
-import bcolz
+#import bcolz
 
 
 logging.basicConfig(
